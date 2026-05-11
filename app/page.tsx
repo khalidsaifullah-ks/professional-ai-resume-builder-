@@ -152,16 +152,15 @@ const initialData: ResumeData = {
   history: [],
 }
 
-const STORAGE_KEY = "halfbaked-resume-data" // Updated storage key to match new branding
+const STORAGE_KEY = "minimalist-resumebuilder-data"
 const AUTO_SAVE_DELAY = 2000 // 2 seconds
-const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "AIzaSyAS7cOgH-KH0iaucOhsRsWrOX_q3P84MuY";
-const GEMINI_MODEL = process.env.NEXT_PUBLIC_GEMINI_MODEL || "gemini-2.5-flash";
 
 export default function ResumePage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<{ sender: string; text: string }[]>([]);
   const [customApiKey, setCustomApiKey] = useState<string>("")
+  const [selectedModel, setSelectedModel] = useState<string>("gemini-3.1-flash-lite")
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [customInstructions, setCustomInstructions] = useState("")
@@ -178,13 +177,13 @@ export default function ResumePage() {
   const [isChatLoading, setIsChatLoading] = useState(false)
   const [selectedFont, setSelectedFont] = useState<string>(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("halfbaked-resume-font") || "Arial, Helvetica, sans-serif"
+      return localStorage.getItem("minimalist-resumebuilder-font") || "Arial, Helvetica, sans-serif"
     }
     return "Arial, Helvetica, sans-serif"
   })
 
   useEffect(() => {
-    localStorage.setItem("halfbaked-resume-font", selectedFont)
+    localStorage.setItem("minimalist-resumebuilder-font", selectedFont)
   }, [selectedFont])
 
   const [pendingUpdate, setPendingUpdate] = useState<any | null>(null)
@@ -215,7 +214,7 @@ export default function ResumePage() {
   }, [chatMessages, isChatLoading])
 
   const getActiveApiKey = () => {
-    return customApiKey || GEMINI_API_KEY;
+    return customApiKey.trim();
   }
 
   const ensureApiKey = (actionName: string) => {
@@ -272,7 +271,7 @@ export default function ResumePage() {
       const prompt = `Analyze this resume and give personalized feedback, tips, improvements, and suggest better wording, formatting, or missing sections.
 Resume Data: ${JSON.stringify(resumeData)}`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${activeKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -280,10 +279,10 @@ Resume Data: ${JSON.stringify(resumeData)}`;
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`AI review failed: ${response.status}`);
-      }
       const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`API Error (${response.status}): ${data?.error?.message || "Unknown error"}`);
+      }
       let feedback = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No feedback returned.";
       
       // Clean basic markdown formatting
@@ -744,7 +743,7 @@ REQUIRED JSON FORMAT
 
       parts.push({ text: prompt })
 
-      const response = await fetchGeminiWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${activeKey}`, {
+      const response = await fetchGeminiWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -754,10 +753,10 @@ REQUIRED JSON FORMAT
           }
         })
       })
-      if (!response.ok) {
-        throw new Error(`AI import failed: ${response.status}`)
-      }
       const resData = await response.json()
+      if (!response.ok) {
+        throw new Error(`API Error (${response.status}): ${resData?.error?.message || "Unknown error"}`)
+      }
       const parsedText = resData?.candidates?.[0]?.content?.parts?.[0]?.text
       if (!parsedText) throw new Error("Empty response from AI")
 
@@ -809,7 +808,7 @@ ${JSON.stringify(resumeData)}
 Target Job Description:
 ${jobDescription}`
 
-      const response = await fetchGeminiWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${activeKey}`, {
+      const response = await fetchGeminiWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -819,10 +818,10 @@ ${jobDescription}`
           }
         })
       })
-      if (!response.ok) {
-        throw new Error(`AI tailoring failed: ${response.status}`)
-      }
       const resData = await response.json()
+      if (!response.ok) {
+        throw new Error(`API Error (${response.status}): ${resData?.error?.message || "Unknown error"}`)
+      }
       const parsedText = resData?.candidates?.[0]?.content?.parts?.[0]?.text
       if (!parsedText) throw new Error("Empty response from AI")
 
@@ -885,6 +884,11 @@ ${jobDescription}`
     if (savedKey) {
       setCustomApiKey(savedKey)
     }
+
+    const savedModel = localStorage.getItem("user-gemini-model")
+    if (savedModel) {
+      setSelectedModel(savedModel)
+    }
   }, [])
 
   useEffect(() => {
@@ -941,7 +945,7 @@ ${jobDescription}`
 
   async function fetchGeminiChatResponse(message: string) {
     const activeKey = getActiveApiKey();
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${activeKey}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`;
     
     const systemInstruction = `You are an AI Resume Assistant. The user is currently building/editing their resume.
 Current Resume JSON:
@@ -981,9 +985,12 @@ Your rules:
         body: JSON.stringify(body)
       });
       const data = await response.json();
+      if (!response.ok) {
+        return `API Error (${response.status}): ${data?.error?.message || "Unknown error"}`;
+      }
       return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI.";
     } catch (err) {
-      return "Error connecting to AI service.";
+      return `Error: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
@@ -1043,7 +1050,7 @@ Your rules:
       <div className="max-w-[1600px] mx-auto px-3 md:px-6 pt-4 md:pt-6 print:hidden">
         <div className="bg-card border border-border shadow-sm rounded-xl py-3 px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-base md:text-lg font-bold text-foreground">Resume Builder</h1>
+            <h1 className="text-base md:text-lg font-bold text-foreground">Minimalist Resume Builder</h1>
             {lastSaved && (
               <span className="hidden md:inline text-xs text-muted-foreground ml-2">
                 (Saved {lastSaved.toLocaleTimeString()})
@@ -1461,6 +1468,31 @@ Your rules:
                 </span>
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1">
+                  Gemini AI Model
+                </label>
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger className="w-full border border-gray-300 dark:border-border bg-background text-sm text-foreground focus:ring-0 cursor-pointer">
+                    <SelectValue placeholder="Select Model" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border rounded-lg shadow-lg text-xs z-50">
+                    <SelectItem value="gemini-3.1-flash-lite" className="cursor-pointer hover:bg-accent py-1.5 px-3">
+                      Gemini 3.1 Flash Lite
+                    </SelectItem>
+                    <SelectItem value="gemini-2.5-flash-lite" className="cursor-pointer hover:bg-accent py-1.5 px-3">
+                      Gemini 2.5 Flash Lite
+                    </SelectItem>
+                    <SelectItem value="gemini-3.5-flash" className="cursor-pointer hover:bg-accent py-1.5 px-3">
+                      Gemini 3.5 Flash
+                    </SelectItem>
+                    <SelectItem value="gemini-2.5-flash" className="cursor-pointer hover:bg-accent py-1.5 px-3">
+                      Gemini 2.5 Flash
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="border-t border-gray-200 dark:border-border pt-4">
                 <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1">
                   Raw Resume JSON Data
@@ -1490,16 +1522,19 @@ Your rules:
                   variant="outline"
                   onClick={() => {
                     localStorage.removeItem("user-gemini-api-key");
+                    localStorage.removeItem("user-gemini-model");
                     setCustomApiKey("");
+                    setSelectedModel("gemini-3.1-flash-lite");
                     setIsSettingsOpen(false);
                   }}
                   className="text-xs"
                 >
-                  Clear Key
+                  Clear Config
                 </Button>
                 <Button
                   onClick={() => {
                     localStorage.setItem("user-gemini-api-key", customApiKey.trim());
+                    localStorage.setItem("user-gemini-model", selectedModel);
                     setIsSettingsOpen(false);
                   }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
