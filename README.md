@@ -27,22 +27,26 @@ Minimalist ResumeBuilder combines a structured drag-and-drop form editor with a 
 ## Key Functionalities
 
 ### 1. Interactive Form Editor
-*   **Structured Section Inputs:** Fill out standard professional fields including Personal Information (LinkedIn, GitHub, LeetCode handles), Education histories, Project portfolios, and Professional Experiences.
-*   **Drag-and-Drop Reordering:** Easily modify your resume's layout hierarchy by dragging entire sections to emphasize different areas of your profile.
-*   **Custom Dynamic Sections:** Add bespoke sections (e.g., Languages, Certifications, Extracurriculars) with layouts supporting full text, bullet lists, or header-subtitle combinations.
+
+* **Structured Section Inputs:** Fill out standard professional fields including Personal Information (LinkedIn, GitHub, LeetCode handles), Education histories, Project portfolios, and Professional Experiences.
+* **Drag-and-Drop Reordering:** Easily modify your resume's layout hierarchy by dragging entire sections to emphasize different areas of your profile.
+* **Custom Dynamic Sections:** Add bespoke sections (e.g., Languages, Certifications, Extracurriculars) with layouts supporting full text, bullet lists, or header-subtitle combinations.
 
 ### 2. Gemini AI Assistant
+
 The AI Assistant panel (powered by the latest `gemini-3.1-flash-lite` or `gemini-3.5-flash` models) operates directly on your resume data:
-*   **Conversational Editing (Chatbot):** Type instructions (e.g., *"Add a project named Portfolio using Next.js and TypeScript"*, *"Change my phone number"*, or *"Rewrite my latest job description to sound more professional"*). Review and apply proposed changes with a single click.
-*   **Resume Parser & Import:** Upload an existing PDF resume or paste raw text. The AI extracts the content and automatically populates the form fields.
-*   **Resume Reviewer:** Grades your resume, calculates a quality score, and provides actionable recommendations to improve impact, active verbs, and structure.
-*   **AI Job Tailoring:** Paste a target job description; the AI optimizes your experience descriptions, projects, and skills to align with the target keywords for maximum ATS compatibility.
+
+* **Conversational Editing (Chatbot):** Type instructions (e.g., *"Add a project named Portfolio using Next.js and TypeScript"*, *"Change my phone number"*, or *"Rewrite my latest job description to sound more professional"*). Review and apply proposed changes with a single click.
+* **Resume Parser & Import:** Upload an existing PDF resume or paste raw text. The AI extracts the content and automatically populates the form fields.
+* **Resume Reviewer:** Grades your resume, calculates a quality score, and provides actionable recommendations to improve impact, active verbs, and structure.
+* **AI Job Tailoring:** Paste a target job description; the AI optimizes your experience descriptions, projects, and skills to align with the target keywords for maximum ATS compatibility.
 
 ### 3. Print-Perfect Layouts & Typography
-*   **A4 Sheet Pagination:** Real-time visual pagination on screen matching standard A4 dimensions. Prevents content overflows, text truncation, or overlap.
-*   **One-Page Layout Discipline:** Automatically ensures section spacing is optimized to fit on exactly one page, following the industry standard of a max of 6 main sections.
-*   **LaTeX-Style Serif Typography:** Choose from premium sans-serif and serif fonts, including LaTeX-inspired Computer Modern, which persist on refresh and carry over to prints.
-*   **Dual Downloads:** Export to clean Microsoft Word (DOCX) files or print directly to pixel-perfect PDFs.
+
+* **A4 Sheet Pagination:** Real-time visual pagination on screen matching standard A4 dimensions. Prevents content overflows, text truncation, or overlap.
+* **One-Page Layout Discipline:** Automatically ensures section spacing is optimized to fit on exactly one page, following the industry standard of a max of 6 main sections.
+* **LaTeX-Style Serif Typography:** Choose from premium sans-serif and serif fonts, including LaTeX-inspired Computer Modern, which persist on refresh and carry over to prints.
+* **Dual Downloads:** Export to clean Microsoft Word (DOCX) files or print directly to pixel-perfect PDFs.
 
 ---
 
@@ -69,12 +73,12 @@ The AI Assistant panel (powered by the latest `gemini-3.1-flash-lite` or `gemini
 
 ## Technical Stack
 
-*   **Frontend Framework:** Next.js (App Router) & React 19
-*   **Styling:** Tailwind CSS & Tailwind-Merge
-*   **State Management:** React Context and Custom Hooks with local storage persistence
-*   **UI Components:** Radix UI Primitives (Shadcn UI blocks)
-*   **AI Integration:** Google Generative AI (Gemini Developer API)
-*   **Icons:** Lucide React
+* **Frontend Framework:** Next.js (App Router) & React 19
+* **Styling:** Tailwind CSS & Tailwind-Merge
+* **State Management:** React Context and Custom Hooks with local storage persistence
+* **UI Components:** Radix UI Primitives (Shadcn UI blocks)
+* **AI Integration:** Google Generative AI (Gemini Developer API)
+* **Icons:** Lucide React
 
 ---
 
@@ -113,6 +117,40 @@ npx next build
 ### 4. Configure Gemini API Key
 
 Open the application in your browser, click on the **Gear/Settings** icon in the header, and paste your Gemini API Key. The key is stored securely in your browser's local storage and sent directly to Google.
+
+---
+
+## 🐳 Docker / Self-Hosting
+
+This project is fully Dockerized and published to **GitHub Container Registry (GHCR)**.
+
+### Option 1: Run with GitHub Packages (No Setup Required)
+
+Run the pre-built image directly from GitHub Container Registry:
+
+```bash
+docker run -d -p 3000:3000 ghcr.io/khalidsaifullah-ks/professional-ai-resume-builder-:latest
+```
+
+Access the application at [http://localhost:3000](http://localhost:3000).
+
+### Option 2: Run Locally with Docker Compose
+
+If you have cloned the repository, build and run it locally with one command:
+
+```bash
+docker compose up -d --build
+```
+
+* `docker compose up` starts the container.
+* The `-d` flag runs it in the background.
+* The `--build` flag ensures any local configuration changes are applied.
+
+To stop the container:
+
+```bash
+docker compose down
+```
 
 ---
 
