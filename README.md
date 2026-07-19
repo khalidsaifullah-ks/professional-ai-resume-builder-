@@ -129,10 +129,15 @@ This project is fully Dockerized and published to **GitHub Container Registry (G
 Run the pre-built image directly from GitHub Container Registry:
 
 ```bash
-docker run -d -p 3000:3000 ghcr.io/khalidsaifullah-ks/minimalist-resumebuilder:latest
+docker run -d --name resume-builder -p 3000:3000 ghcr.io/khalidsaifullah-ks/minimalist-resumebuilder:latest
 ```
 
 Access the application at [http://localhost:3000](http://localhost:3000).
+
+To stop and remove the container:
+```bash
+docker rm -f resume-builder
+```
 
 ### Option 2: Run Locally with Docker Compose
 
