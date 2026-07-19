@@ -129,7 +129,7 @@ This project is fully Dockerized and published to **GitHub Container Registry (G
 Run the pre-built image directly from GitHub Container Registry:
 
 ```bash
-docker run -d -p 3000:3000 ghcr.io/khalidsaifullah-ks/professional-ai-resume-builder-:latest
+docker run -d -p 3000:3000 ghcr.io/khalidsaifullah-ks/minimalist-resumebuilder:latest
 ```
 
 Access the application at [http://localhost:3000](http://localhost:3000).
