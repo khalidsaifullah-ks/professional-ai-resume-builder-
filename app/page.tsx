@@ -1069,7 +1069,7 @@ Your rules:
       <div className="max-w-[1600px] mx-auto px-2 sm:px-3 md:px-6 pt-3 md:pt-6 print:hidden">
         <div className="bg-card border border-border shadow-sm rounded-xl py-2.5 px-3 sm:px-4 md:px-6 flex flex-wrap md:flex-nowrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-sm sm:text-base md:text-lg font-bold text-foreground truncate max-w-[140px] xs:max-w-none">
+            <h1 className="text-sm sm:text-base md:text-lg font-bold text-foreground whitespace-nowrap">
               Minimalist Resume Builder
             </h1>
             {lastSaved && (
