@@ -634,7 +634,7 @@ export function ResumeForm({ resumeData, setResumeData }: ResumeFormProps) {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 overflow-y-auto h-full">
 
       {/* Section Reordering Panel */}
       <section className="border border-border p-4 rounded-lg bg-card/50 space-y-3">

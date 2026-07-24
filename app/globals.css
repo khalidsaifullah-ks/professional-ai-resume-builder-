@@ -121,6 +121,10 @@
 
 /* Print styles with natural spacing preservation */
 @media print {
+  [data-radix-portal], [data-radix-popper-content-wrapper], [role="menu"], [role="listbox"], [role="dialog"] {
+    display: none !important;
+  }
+
   .resume-page {
     box-shadow: none !important;
     border: none !important;

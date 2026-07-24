@@ -10,6 +10,14 @@ export async function generatePDF(resumeData: ResumeData) {
   
   document.title = fileName
 
+  // Dismiss open dropdown/popup focus
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur()
+  }
+
+  // Small delay to allow Radix dropdown popup to dismiss before browser print modal
+  await new Promise((resolve) => setTimeout(resolve, 50))
+
   // Trigger browser native print dialog
   window.print()
 

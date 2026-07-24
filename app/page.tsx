@@ -852,6 +852,9 @@ ${jobDescription}`
   const [resumeData, setResumeData] = useState<ResumeData>(initialData)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [mobileTab, setMobileTab] = useState<"form" | "preview" | "chat">("form")
+  const isInitialLoadRef = useRef(true)
+
   // Remove history UI and state
 
   useEffect(() => {
@@ -889,6 +892,8 @@ ${jobDescription}`
     if (savedModel) {
       setSelectedModel(savedModel)
     }
+
+    isInitialLoadRef.current = false
   }, [])
 
   useEffect(() => {
@@ -903,7 +908,21 @@ ${jobDescription}`
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  // Auto-saving removed
+  // Auto-saving logic: debounced 800ms auto-save to localStorage on form/resume changes
+  useEffect(() => {
+    if (isInitialLoadRef.current) return
+
+    const timer = setTimeout(() => {
+      const dataToSave = {
+        ...resumeData,
+        lastSaved: Date.now(),
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
+      setLastSaved(new Date())
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [resumeData])
 
   const handleDownloadHTMLDOCX = async () => {
     await generateHTMLToDOCX(resumeData)
@@ -1047,23 +1066,25 @@ Your rules:
   return (
     <div className="min-h-screen bg-background print:bg-white print:min-h-0">
       {/* Header */}
-      <div className="max-w-[1600px] mx-auto px-3 md:px-6 pt-4 md:pt-6 print:hidden">
-        <div className="bg-card border border-border shadow-sm rounded-xl py-3 px-6 flex items-center justify-between">
+      <div className="max-w-[1600px] mx-auto px-2 sm:px-3 md:px-6 pt-3 md:pt-6 print:hidden">
+        <div className="bg-card border border-border shadow-sm rounded-xl py-2.5 px-3 sm:px-4 md:px-6 flex flex-wrap md:flex-nowrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-base md:text-lg font-bold text-foreground">Minimalist Resume Builder</h1>
+            <h1 className="text-sm sm:text-base md:text-lg font-bold text-foreground truncate max-w-[140px] xs:max-w-none">
+              Minimalist Resume Builder
+            </h1>
             {lastSaved && (
-              <span className="hidden md:inline text-xs text-muted-foreground ml-2">
+              <span className="text-[10px] sm:text-xs text-muted-foreground ml-1">
                 (Saved {lastSaved.toLocaleTimeString()})
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <Button
               onClick={handleManualSave}
               variant="outline"
               size="sm"
-              className="border-border text-foreground hover:bg-accent bg-transparent text-xs md:text-sm px-3"
+              className="border-border text-foreground hover:bg-accent bg-transparent text-xs px-2 sm:px-3 h-8 sm:h-9"
             >
               Save Now
             </Button>
@@ -1072,14 +1093,14 @@ Your rules:
               onClick={handleReset}
               variant="outline"
               size="sm"
-              className="border-border text-foreground hover:bg-accent bg-transparent text-xs md:text-sm px-3"
+              className="border-border text-foreground hover:bg-accent bg-transparent text-xs px-2 sm:px-3 h-8 sm:h-9"
             >
               Reset
             </Button>
 
             <Select value={selectedFont} onValueChange={setSelectedFont}>
-              <SelectTrigger className="w-[170px] h-9 border-border bg-card text-xs text-foreground focus:ring-0 cursor-pointer">
-                <SelectValue placeholder="Select Font" />
+              <SelectTrigger className="w-[110px] sm:w-[140px] md:w-[170px] h-8 sm:h-9 border-border bg-card text-xs text-foreground focus:ring-0 cursor-pointer">
+                <SelectValue placeholder="Font" />
               </SelectTrigger>
               <SelectContent className="bg-card border border-border rounded-lg shadow-lg text-xs z-50">
                 {FONTS_LIST.map((f) => (
@@ -1090,14 +1111,14 @@ Your rules:
               </SelectContent>
             </Select>
 
-            <div className="w-[1px] h-5 bg-border mx-2" />
+            <div className="hidden sm:block w-[1px] h-5 bg-border mx-1" />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="border-border text-foreground hover:bg-accent bg-transparent h-9 w-9 flex items-center justify-center rounded-lg cursor-pointer"
+                  className="border-border text-foreground hover:bg-accent bg-transparent h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-lg cursor-pointer"
                   title="Download Resume"
                 >
                   <Download className="w-4 h-4" />
@@ -1125,7 +1146,7 @@ Your rules:
               onClick={() => setIsSettingsOpen(true)}
               variant="outline"
               size="icon"
-              className="border-border text-foreground hover:bg-accent bg-transparent h-9 w-9 flex items-center justify-center rounded-lg"
+              className="border-border text-foreground hover:bg-accent bg-transparent h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-lg"
               title="AI API Key Settings"
             >
               <Settings className="w-4 h-4" />
@@ -1134,28 +1155,71 @@ Your rules:
         </div>
       </div>
 
+      {/* Mobile Tab View Navigation (< md) */}
+      <div className="sticky top-0 z-30 max-w-[1600px] mx-auto px-2 sm:px-3 pt-2 pb-1 bg-background/95 backdrop-blur-md md:hidden print:hidden">
+        <div className="bg-card border border-border rounded-xl p-1 shadow-sm flex items-center justify-between gap-1">
+          <button
+            onClick={() => setMobileTab("form")}
+            className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
+              mobileTab === "form"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            }`}
+          >
+            <span>Form Editor</span>
+          </button>
+
+          <button
+            onClick={() => setMobileTab("preview")}
+            className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
+              mobileTab === "preview"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            }`}
+          >
+            <span>Live Preview</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setMobileTab("chat");
+              setIsChatOpen(true);
+            }}
+            className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
+              mobileTab === "chat"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            }`}
+          >
+            <span>AI Assistant</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Content: Resume Form, Live Preview & Collapsible Sidebar Chat */}
-      <div className="max-w-[1600px] mx-auto p-3 md:p-6 print:p-0 print:m-0 print:max-w-none">
-        <div className={`grid gap-4 md:gap-6 min-h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] transition-all duration-300 print:grid-cols-1 print:h-auto print:gap-0 print:min-h-0 ${
+      <div className="max-w-[1600px] mx-auto p-2 sm:p-3 md:p-6 print:p-0 print:m-0 print:max-w-none">
+        <div className={`grid gap-4 md:gap-6 min-h-[calc(100vh-160px)] md:h-[calc(100vh-120px)] transition-all duration-300 print:grid-cols-1 print:h-auto print:gap-0 print:min-h-0 ${
           isChatOpen 
             ? "grid-cols-1 xl:grid-cols-[1fr_1.8fr_1fr] lg:grid-cols-[1.1fr_1.7fr_1.2fr] md:grid-cols-[1fr_1.5fr_1fr]" 
             : "grid-cols-1 md:grid-cols-[1fr_2fr]"
         }`}>
-          <div className="bg-card rounded-xl shadow-lg border border-border overflow-hidden h-full print:hidden">
+          {/* Resume Form Section */}
+          <div className={`${mobileTab === "form" ? "block" : "hidden"} md:block bg-card rounded-xl shadow-lg border border-border overflow-hidden h-full print:hidden`}>
             <ResumeForm resumeData={resumeData} setResumeData={setResumeData} />
           </div>
           
-          <div className="bg-card rounded-xl shadow-lg border border-border overflow-hidden h-full print:shadow-none print:border-none print:bg-transparent print:h-auto print:overflow-visible">
+          {/* Live Preview Section */}
+          <div className={`${mobileTab === "preview" ? "block" : "hidden"} md:block bg-card rounded-xl shadow-lg border border-border overflow-hidden h-full print:shadow-none print:border-none print:bg-transparent print:h-auto print:overflow-visible`}>
             <div className="h-full flex flex-col print:h-auto print:block">
               <div className="bg-muted px-4 md:px-6 py-3 md:py-4 border-b border-border print:hidden">
                 <h2 className="text-base md:text-lg font-semibold text-foreground">Live Preview</h2>
               </div>
-              <div className="flex-1 p-2 md:p-4 overflow-y-auto print:p-0 print:m-0 print:overflow-visible">
+              <div className="flex-1 p-2 md:p-4 overflow-y-auto overflow-x-auto print:p-0 print:m-0 print:overflow-visible">
                 <div
                   id="preview-scale-wrapper"
                   className="w-full max-w-[210mm] mx-auto shadow-lg print:shadow-none print:transform-none print:max-w-none print:w-auto"
                   style={{
-                    transform: isMobile ? "scale(0.6)" : "scale(0.9)",
+                    transform: isMobile ? "scale(0.55)" : "scale(0.9)",
                     transformOrigin: "top center",
                     minHeight: "297mm",
                   }}
@@ -1169,7 +1233,7 @@ Your rules:
 
           {/* AI Chat Assistant Sidebar */}
           {isChatOpen && (
-            <div className="bg-card rounded-xl shadow-lg border border-border overflow-hidden h-full flex flex-col print:hidden">
+            <div className={`${mobileTab === "chat" ? "block" : "hidden"} md:block bg-card rounded-xl shadow-lg border border-border overflow-hidden h-full flex flex-col print:hidden`}>
               <div className="bg-muted px-4 py-3 border-b border-border flex items-center justify-between">
                 <div>
                   <h2 className="text-sm md:text-base font-semibold text-foreground">AI Assistant</h2>
@@ -1177,7 +1241,10 @@ Your rules:
                 </div>
                 <button
                   className="text-muted-foreground hover:text-foreground text-lg font-bold"
-                  onClick={() => setIsChatOpen(false)}
+                  onClick={() => {
+                    setIsChatOpen(false);
+                    if (mobileTab === "chat") setMobileTab("form");
+                  }}
                   aria-label="Close"
                 >
                   &times;
@@ -1554,9 +1621,10 @@ Your rules:
           <button
             onClick={() => {
               setIsChatOpen(true);
+              setMobileTab("chat");
               if (!ensureApiKey("chat with the AI Assistant")) return;
             }}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-[10px] py-3.5 px-2.5 rounded-l-md shadow-lg flex flex-col items-center gap-1.5 transition-all duration-200 border-l border-t border-b border-purple-500 [writing-mode:vertical-lr] cursor-pointer w-9"
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-[10px] py-3 px-2 sm:py-3.5 sm:px-2.5 rounded-l-md shadow-lg flex flex-col items-center gap-1.5 transition-all duration-200 border-l border-t border-b border-purple-500 [writing-mode:vertical-lr] cursor-pointer w-8 sm:w-9"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span className="tracking-wider uppercase">Chat</span>
@@ -1566,12 +1634,13 @@ Your rules:
           <button
             onClick={() => {
               setIsChatOpen(true);
+              setMobileTab("chat");
               if (!ensureApiKey("autofill your resume")) return;
               setTimeout(() => {
                 document.getElementById("sidebar-file-upload")?.click();
               }, 150);
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[10px] py-3.5 px-2.5 rounded-l-md shadow-lg flex flex-col items-center gap-1.5 transition-all duration-200 border-l border-t border-b border-blue-500 [writing-mode:vertical-lr] cursor-pointer w-9"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[10px] py-3 px-2 sm:py-3.5 sm:px-2.5 rounded-l-md shadow-lg flex flex-col items-center gap-1.5 transition-all duration-200 border-l border-t border-b border-blue-500 [writing-mode:vertical-lr] cursor-pointer w-8 sm:w-9"
           >
             <Upload className="w-3.5 h-3.5" />
             <span className="tracking-wider uppercase">Autofill</span>
@@ -1581,12 +1650,13 @@ Your rules:
           <button
             onClick={() => {
               setIsChatOpen(true);
+              setMobileTab("chat");
               if (!ensureApiKey("review your resume")) return;
               setTimeout(() => {
                 handleConversationalReview();
               }, 150);
             }}
-            className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-[10px] py-3.5 px-2.5 rounded-l-md shadow-lg flex flex-col items-center gap-1.5 transition-all duration-200 border-l border-t border-b border-amber-500 [writing-mode:vertical-lr] cursor-pointer w-9"
+            className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-[10px] py-3 px-2 sm:py-3.5 sm:px-2.5 rounded-l-md shadow-lg flex flex-col items-center gap-1.5 transition-all duration-200 border-l border-t border-b border-amber-500 [writing-mode:vertical-lr] cursor-pointer w-8 sm:w-9"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span className="tracking-wider uppercase">Review</span>
@@ -1596,12 +1666,13 @@ Your rules:
           <button
             onClick={() => {
               setIsChatOpen(true);
+              setMobileTab("chat");
               if (!ensureApiKey("tailor your resume")) return;
               setTimeout(() => {
                 setIsTailorOpen(true);
               }, 150);
             }}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold text-[10px] py-3.5 px-2.5 rounded-l-md shadow-lg flex flex-col items-center gap-1.5 transition-all duration-200 border-l border-t border-b border-green-500 [writing-mode:vertical-lr] cursor-pointer w-9"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold text-[10px] py-3 px-2 sm:py-3.5 sm:px-2.5 rounded-l-md shadow-lg flex flex-col items-center gap-1.5 transition-all duration-200 border-l border-t border-b border-green-500 [writing-mode:vertical-lr] cursor-pointer w-8 sm:w-9"
           >
             <Target className="w-3.5 h-3.5" />
             <span className="tracking-wider uppercase">Tailor</span>
